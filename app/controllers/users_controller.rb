@@ -12,14 +12,15 @@ class UsersController < ApplicationController
         mypassword = params[:password]
         # The return value of the method call add()
         returncode = Users.add(myuser, mypassword)
-        # We can get away with this because 1 is the only successful error code
-        returnJSON = {:errCode => returncode}
-        errJSON = {:errCode => $SUCCESS, :count => returncode}
+        # Make a JSON for error and successful execution
+        errJSON = {:errCode => returncode}
+        returnJSON = {:errCode => $SUCCESS, :count => returncode}
         
+        # We can get away with this because 1 is the only successful error code
         if returncode < 1
-            render :json => returnJSON
-        else
             render :json => errJSON
+        else
+            render :json => returnJSON
         end
     end
     # LOGIN
@@ -29,13 +30,14 @@ class UsersController < ApplicationController
         mypassword = params[:password]
         # The return value of the method call login()
         returncode = Users.login(myuser, mypassword)
-        returnJSON = {:errCode => returncode}
-        errJSON = {:errCode => $SUCCESS, :count => returncode}
+        
+        errJSON = {:errCode => returncode}
+        returnJSON = {:errCode => $SUCCESS, :count => returncode}
         
         if returncode < 1
-            render :json => returnJSON
-        else
             render :json => errJSON
+        else
+            render :json => returnJSON
         end
     end
     # resetFixture
@@ -48,16 +50,23 @@ class UsersController < ApplicationController
     # unitTests
     def unitTests
         begin
+            # utOutput is a ruby file
             utOutput = `ruby -Itest test/unit/users_test.rb`
+            # Split file into an array of rows based on page lines
             utValue = utOutput.split(/\r?\n/)
             
-            failedUnitTests = utValue[-1].split(",")[2]
-            totalUnitTests = utValue[-1].split(",")[0]
+            # In English, these two variables take the last line of the ruby file,
+            # split along "," characters, and return 3rd and 1st elements
+            # respectively as integers
             
-            totalUnitTests = Integer(totalUnitTests.scan(/\d+/)[0])
-            failedUnitTests = Integer(failedUnitTests.scan(/\d+/)[0])
+            # For reference, the last line of the file looks like:
+            # "10 tests, 13 assertions, 0 failures, 0 errors, 0 skips"
             
+            failedUnitTests = Integer(utValue[-1].split(",")[2].scan(/\d+/)[0])
+            totalUnitTests = Integer(utValue[-1].split(",")[0].scan(/\d+/)[0])
             
+            # Make 2 JSONs, one containing default output, one for when something
+            # goes amiss during runtime (i.e. 500 error)
             outputJSON = {:totalTests => totalUnitTests, :nrFailed => failedUnitTests, :output => utOutput}
             errorJSON = {:output => "ERROR OCCURED"}
             
